@@ -1,13 +1,119 @@
+# Title:        Zobean's zshrc
+# Last Edited:  2017-09-29
+# Notes:        Enjoy your stay!
+# Authors:
+#   Zoey Hewll <ZoeyHewll@gmail.com>
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 # Executes commands at the start of an interactive session.
 #
-# Authors:
-#   Sorin Ionescu <sorin.ionescu@gmail.com>
-#
 
-# Source Prezto.
+# Source Prezto {{{
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
+# }}}
+# Customize to your needs {{{
+# ZSH Settings {{{
+# Use case-sensitive completion.
+CASE_SENSITIVE="false"
 
-# Customize to your needs...
+# Use hyphen-insensitive completion. If case sensitive completion is off,
+# _ and - will also be interchangeable.
+HYPHEN_INSENSITIVE="true"
+
+# Disable bi-weekly auto-update checks.
+DISABLE_AUTO_UPDATE="false"
+
+# Change how often to auto-update (in days).
+#export UPDATE_ZSH_DAYS=13
+
+# Disable colors in ls output.
+DISABLE_LS_COLORS="false"
+
+# Disable auto-setting terminal title.
+DISABLE_AUTO_TITLE="false"
+
+# Enable command auto-correction.
+ENABLE_CORRECTION="false"
+
+# Display red dots whilst waiting for completion.
+COMPLETION_WAITING_DOTS="true"
+ 
+# Change the command execution timestamp shown in the history command output.
+# The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+HIST_STAMPS="yyyy/mm/dd"
+
+# Would you like to use another custom folder than $ZSH/custom?
+#ZSH_CUSTOM=/path/to/new-custom-folder
+ 
+# Lines configured by zsh-newuser-install {{{
+HISTFILE=~/.zsh_history
+HISTSIZE=1000
+SAVEHIST=2000
+setopt appendhistory beep extendedglob nomatch autocd
+unsetopt notify correct
+#bindkey -v
+# }}} 
+
+# }}}
+# Appearance {{{
+tabs 4
+# }}}
+# Alias Settings {{{
+# Preferred editor for local and remote sessions
+if [[ -n $SSH_CONNECTION ]]; then
+	export EDITOR='vim'
+else
+	export EDITOR='vim'
+fi
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+alias define='dict'
+alias del='gvfs-trash'
+alias edit='$EDITOR'
+alias ls='ls --color=tty --group-directories-first'
+alias monitor='gnome-system-monitor'
+alias nemo='nemo --no-desktop'
+alias pip='pip3'
+alias python='python3'
+alias reset='exec $SHELL'
+alias rsync='rsync --progress'
+alias shred='\shred --iterations=10 --exact --zero --remove'
+alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
+alias vi="vim"
+alias vim='vim -o'
+function mkcd
+{
+	mkdir "$@"
+	cd "$1"
+}
+# }}}
+# Environment (may belong in zprofile) {{{
+export PYTHONPATH="$PYTHONPATH:$HOME/Dropbox/Programming/python"
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+# source /etc/default/locale
+# }}}
+# Unknown Stuff (may be removable) {{{
+# Compilation flags
+#export ARCHFLAGS="-arch x86_64"
+
+#ssh
+#export SSH_KEY_PATH="~/.ssh/dsa_id"
+
+# The following lines were added by compinstall
+#zstyle :compinstall filename '$HOME/.zshrc'
+
+#autoload -Uz compinit
+#compinit
+# }}}
+# Postamble (modelines) {{{
+# This is specifically to allow for cool vim folding.
+# Note: 'modelines' should be at least the distance
+# of the modeline from the top or bottom of the file
+set modeline modelines=5
+# Modeline to enable marker-based folding
+# vim:foldmethod=marker:
+# }}}
+# }}}
