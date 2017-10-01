@@ -1,0 +1,232 @@
+# Title:        Zobean's prezto zsh theme!
+# Author:       Zoey Llewellyn "Zobean" Hewll
+# Last Edited:  2017-08-11
+#
+# Features:
+#   - Command timestamps
+#       - Colored to indicate exit status
+#       - Start-time timestamp can be updated with `zle reset-prompt`
+#   - Colored git status indicator (requires git prezto module)
+#       - Branch, relative position, or commit hash
+#       - Ahead and behind counts
+#       - Dirty status indicator
+#       - Stash count
+#       - Special action underway (rebase, merge, etc)
+#   - Printed exit status if not 0/1
+#   - SSH/SCP path format (user@hostname:path)
+#   - Path length defined by style, with the current directory highlighted
+#   - Polite command prompt, with custom title
+#
+# Usage:
+#   This prompt's title and time format are customisable:
+#     prompt zobean [<title> [(12/24)]]
+#
+#   In ~/.zpreztorc:
+#     zstyle ':prezto:module:prompt' theme 'zobean' <title> (12/24)
+#
+#   If these options are not provided, the title defaults to $USER
+#   and the time defaults to 24hr.
+#
+# Notes:        Enjoy your stay!
+#               Let me know of any improvements!
+
+function prompt_print_if
+{
+    # print the second argument if the first is nonempty
+    if [[ -n "$1" ]] ; then
+        echo -n "$2"
+    fi
+}
+function prompt_zobean_precmd
+{
+    PROMPT_ZOBEAN_EXITCODE=$?
+    if zstyle -t ':prezto:module:prompt' show-return-val; then
+        case $PROMPT_ZOBEAN_EXITCODE in
+            0)
+                PROMPT_ZOBEAN_ERRCOL="%F{green}"
+                PROMPT_ZOBEAN_ERRSTAT=""
+                ;;
+            1)
+                PROMPT_ZOBEAN_ERRCOL="%F{red}"
+                PROMPT_ZOBEAN_ERRSTAT=""
+                ;;
+            *)
+                PROMPT_ZOBEAN_ERRCOL="%F{red}"
+                PROMPT_ZOBEAN_ERRSTAT="%Fexit:(${PROMPT_ZOBEAN_EXITCODE})%f"
+                ;;
+        esac    
+    else
+        PROMPT_ZOBEAN_ERRCOL="%B%F"
+    fi
+    # Keep up to the last directory in path
+    PROMPT_ZOBEAN_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
+    # Keep only the last directory in path
+    PROMPT_ZOBEAN_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
+    if (( $+functions[git-info] )); then
+        # Get git info before each command
+        git-info
+    fi
+    #git rev-parse --is-inside-work-tree > /dev/null 2>&1
+    #PROMPT_ZOBEAN_IS_GIT=$?
+    PROMPT_ZOBEAN_TIMESTAMP="${(%%):-"${PROMPT_ZOBEAN_TIME_FORMAT}"}" # expand it early, so it doesn't update
+}
+
+function prompt_zobean_help
+{
+  cat <<EOT
+This prompt's title and time format are customizable:
+  prompt zobean [<title> [(12/24)]]
+
+In ~/.zpreztorc:
+  zstyle ':prezto:module:prompt' theme 'zobean' [<title> [(12/24)]]
+
+If each of these options are not provided, or are empty,
+the title defaults to $USER and the time defaults to 24hr.
+EOT
+}
+function prompt_zobean_preview
+{
+  if (( $# > 0 )); then
+    prompt_preview_theme 'zobean' "$@"
+  else
+    prompt_preview_theme 'zobean'
+    print
+    prompt_preview_theme 'zobean' 'my prince'
+    print
+    prompt_preview_theme 'zobean' 'princess' 12
+  fi
+}
+function prompt_zobean_setup
+{
+    # set the following prompt_* options
+    prompt_opts=(cr percent subst)
+    # Load required functions.
+    autoload -Uz add-zsh-hook
+
+    # Add hook for settung up environment variables before each command.
+    add-zsh-hook precmd prompt_zobean_precmd
+    # Update the prompt per-second
+    #TRAPALRM() {
+        #zle reset-prompt
+    #}
+    #TMOUT=1
+    [[ $# -ge 1 ]] && local title=$1
+    [[ $# -ge 2 ]] && local hours=$2
+    case "$hours" in
+        12)
+            PROMPT_ZOBEAN_TIME_FORMAT='%D{%I:%M:%S %p}'
+            ;;
+        24)
+            PROMPT_ZOBEAN_TIME_FORMAT='%D{%H:%M:%S}'
+            ;;
+        *)
+            PROMPT_ZOBEAN_TIME_FORMAT='%D{%H:%M:%S}'
+            ;;
+    esac
+    case "$title" in
+        "")
+            PROMPT_ZOBEAN_TITLE="%n" # same as $USER
+            ;;
+        *)
+            PROMPT_ZOBEAN_TITLE="$title"
+            ;;
+    esac
+
+    prompt_zobean_setup_git
+
+    PROMPT="%{%f%b%k%}$(prompt_zobean_build)"
+    RPROMPT=''
+}
+
+function prompt_zobean_setup_git
+{
+    # no initial format color, so needs to be colored at startup
+    # looks like there'll be coupling here either way
+    zstyle ':prezto:module:git:info:branch' format '%F{blue}%b'
+    zstyle ':prezto:module:git:info:position' format '%F{yellow}%p'
+    zstyle ':prezto:module:git:info:commit' format '%F{red}%c'
+
+    zstyle ':prezto:module:git:info:ahead' format '%F{yellow}↑%A'
+    zstyle ':prezto:module:git:info:behind' format '%F{green}↓%B'
+
+    #zstyle ':prezto:module:git:info:clean' format '%F{green}✔'
+    zstyle ':prezto:module:git:info:dirty' format '%F{yellow}✖'
+    zstyle ':prezto:module:git:info:stashed' format '%F{green}[%S]'
+
+    zstyle ':prezto:module:git:info:action' format '%F{yellow}:%F{red}%s%F{yellow}:' # current special action occuring, eg merge,rebase
+
+    zstyle ':prezto:module:git:info' verbose 'yes'
+    #zstyle ':prezto:module:git:info:added' format '%F{green}✚%F{blue}'
+    #zstyle ':prezto:module:git:info:deleted' format '%F{red}✖%F{blue}'
+    #zstyle ':prezto:module:git:info:modified' format '%F{yellow}●%F{blue}'
+    #zstyle ':prezto:module:git:info:renamed' format '%F{yellow}*%F{blue}'
+
+    local prompt=""
+    function # setup the prompt component order
+    {
+        for x ("$@");
+        do
+            # get the git_info part specified
+            # the (e) flag evaluates the embedded functions when expanding the string
+            prompt="$prompt"'${(e)git_info['"$x"']}'
+        done
+    } \
+    pre ref stream status stash action post # the order of these arguments determines the prompt component order
+    
+    # the components are defined here
+    zstyle ':prezto:module:git:info:keys' format \
+        'pre'    '%F{blue}git:(' \
+        'ref'    '$(coalesce "%b" "%p" "%c")' \
+        'stream' '$(prompt_print_if "%B%A" "%F{blue}|%B%A")' \
+        'status' '$(prompt_print_if "%D" "%F{blue}|%D")' \
+        'stash'  '$(prompt_print_if "%S" "%F{blue}|%S")' \
+        'action' '$(prompt_print_if "%s" "%F{blue}|%s")' \
+        'post'   '%F{blue})%f ' \
+        'prompt' "${prompt}"
+}
+
+function prompt_zobean_build
+{
+    prompt_add_timestamps
+    # space provided in prior command
+    prompt_add_git
+    # space provided in prior command
+    prompt_add_error
+    echo
+    prompt_add_host
+    echo -n ':'
+    prompt_add_path
+    echo
+    prompt_add_query
+}
+function prompt_add_timestamps
+{
+    local PromptLast='${PROMPT_ZOBEAN_ERRCOL}[%F%B${PROMPT_ZOBEAN_TIMESTAMP}%b${PROMPT_ZOBEAN_ERRCOL}]%f ' # finish time of last command
+    local PromptNow='%F%B[${PROMPT_ZOBEAN_TIME_FORMAT}]%b%f ' # start time of this command
+    echo -n "${PromptLast}${PromptNow}"
+}
+function prompt_add_git
+{
+    # the (e) flag evaluates the embedded functions when expanding the string
+    local prompt='${(e)git_info[prompt]}'
+    
+    echo -n "%B${prompt}%f%b"
+}
+function prompt_add_error
+{
+    echo -n '${PROMPT_ZOBEAN_ERRSTAT}'
+}
+function prompt_add_host
+{
+    echo -n '%F{green}%n%f@%F{yellow}%M%f'
+}
+function prompt_add_path
+{
+    echo -n '%F{blue}${PROMPT_ZOBEAN_PATH_NECK}%B${PROMPT_ZOBEAN_PATH_HEAD}%b%f'
+}
+function prompt_add_query
+{
+    echo -n '%F{magenta}yes, %B${PROMPT_ZOBEAN_TITLE}%b%F{magenta}?%f : '
+}
+
+prompt_zobean_setup "$@"
