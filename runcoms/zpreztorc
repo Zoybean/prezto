@@ -113,10 +113,25 @@ zstyle ':prezto:module:editor' key-bindings 'emacs'
 # Prompt
 #
 
+# calling this function causes the prompt to update every second
+function prompt_run_clock
+{
+    function TRAPALRM
+    {
+        # redraw prompt if zle is running
+        zle && zle reset-prompt
+    }
+    if [[ -n "$1" ]] ; then
+        TMOUT="$1"
+    else
+        TMOUT=1
+    fi
+}
 # Set the prompt theme to load.
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
 zstyle ':prezto:module:prompt' theme 'sorin'
+prompt_run_clock 1
 
 # Set the working directory prompt display length.
 # By default, it is set to 'short'. Set it to 'long' (without '~' expansion)
