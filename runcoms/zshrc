@@ -52,7 +52,7 @@ HISTFILE=~/.zsh_history
 HISTSIZE=1000
 SAVEHIST=2000
 setopt appendhistory beep extendedglob nomatch autocd
-unsetopt notify correct
+unsetopt notify correct #TODO this doesn't seem to be disabling 'correct'
 #bindkey -v
 # }}} 
 
@@ -63,29 +63,30 @@ tabs 4
 # Alias Settings {{{
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-	export EDITOR='vim'
+    export EDITOR='vim'
+    alias nemo='nemo --no-desktop'
 else
-	export EDITOR='vim'
+    export EDITOR='vim'
+    alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+    alias define='dict'
+    alias del='gvfs-trash'
+    alias monitor='gnome-system-monitor'
+    alias pip='pip3'
+    alias python='python3'
+    alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
 fi
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-alias define='dict'
-alias del='gvfs-trash'
 alias edit='$EDITOR'
 alias ls='ls --color=tty --group-directories-first'
-alias monitor='gnome-system-monitor'
-alias nemo='nemo --no-desktop'
-alias pip='pip3'
-alias python='python3'
 alias reset='exec $SHELL'
 alias rsync='rsync --progress'
 alias shred='\shred --iterations=10 --exact --zero --remove'
-alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
+alias take=mkcd
 alias vi="vim"
 alias vim='vim -o'
 function mkcd
 {
-	mkdir "$@"
-	cd "$1"
+    mkdir "$@"
+    cd "$1"
 }
 # }}}
 # Environment (may belong in zprofile) {{{
