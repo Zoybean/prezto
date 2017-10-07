@@ -127,7 +127,6 @@ function git-info {
   local branch
   local branch_format
   local branch_formatted
-  local branch_info
   local clean
   local clean_formatted
   local commit
