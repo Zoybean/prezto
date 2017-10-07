@@ -32,10 +32,11 @@
 
 function prompt_print_if
 {
-    # print the second argument if the first is nonempty
-    if [[ -n "$1" ]] ; then
-        echo -n "$2"
-    fi
+    # print the first argument if all the others are nonempty
+    for par do
+        [[ -z "${par}" ]] && return
+    done
+    echo -n "$1"
 }
 function prompt_zobean_precmd
 {
@@ -145,6 +146,7 @@ function prompt_zobean_setup_git
     zstyle ':prezto:module:git:info:branch' format '%F{blue}%b'
     zstyle ':prezto:module:git:info:position' format '%F{yellow}%p'
     zstyle ':prezto:module:git:info:commit' format '%F{red}%c'
+    zstyle ':prezto:module:git:info:error' format '%F{red}::error::'
 
     zstyle ':prezto:module:git:info:ahead' format '%F{yellow}↑%A'
     zstyle ':prezto:module:git:info:behind' format '%F{green}↓%B'
@@ -171,16 +173,17 @@ function prompt_zobean_setup_git
             prompt="$prompt"'${(e)git_info['"$x"']}'
         done
     } \
-    pre ref stream status stash action post # the order of these arguments determines the prompt component order
+    pre error ref stream status stash action post # the order of these arguments determines the prompt component order
     
     # the components are defined here
     zstyle ':prezto:module:git:info:keys' format \
         'pre'    '%F{blue}git:(' \
+        'error'  '%E$(prompt_print_if "%F{blue}|" "%E" "%b%p%c")' \
         'ref'    '$(coalesce "%b" "%p" "%c")' \
-        'stream' '$(prompt_print_if "%B%A" "%F{blue}|%B%A")' \
-        'status' '$(prompt_print_if "%D" "%F{blue}|%D")' \
-        'stash'  '$(prompt_print_if "%S" "%F{blue}|%S")' \
-        'action' '$(prompt_print_if "%s" "%F{blue}|%s")' \
+        'stream' '$(prompt_print_if "%F{blue}|%B%A" "%B%A")' \
+        'status' '$(prompt_print_if "%F{blue}|%D" "%D")' \
+        'stash'  '$(prompt_print_if "%F{blue}|%S" "%S")' \
+        'action' '$(prompt_print_if "%F{blue}|%s" "%s")' \
         'post'   '%F{blue})%f ' \
         'prompt' "${prompt}"
 }
