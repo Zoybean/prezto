@@ -73,7 +73,8 @@ else
     alias monitor='gnome-system-monitor'
     alias pip='pip3'
     alias python='python3'
-    alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
+    #alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
+    alias transmission='sudo service transmission-daemon' # must be followed by start, stop, or reload
 fi
 alias edit='$EDITOR'
 alias ls='ls --color=tty --group-directories-first'
