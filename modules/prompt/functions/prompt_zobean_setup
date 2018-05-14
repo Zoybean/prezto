@@ -38,41 +38,41 @@ function prompt_print_if
     done
     echo -n "$1"
 }
-function prompt_zobean_precmd
+function prompt_precmd
 {
-    PROMPT_ZOBEAN_EXITCODE=$?
+    PROMPT_EXITCODE=$?
     if zstyle -t ':prezto:module:prompt' show-return-val; then
-        case $PROMPT_ZOBEAN_EXITCODE in
+        case $PROMPT_EXITCODE in
             0)
-                PROMPT_ZOBEAN_ERRCOL="%F{green}"
-                PROMPT_ZOBEAN_ERRSTAT=""
+                PROMPT_ERRCOL="%F{green}"
+                PROMPT_ERRSTAT=""
                 ;;
             1)
-                PROMPT_ZOBEAN_ERRCOL="%F{red}"
-                PROMPT_ZOBEAN_ERRSTAT=""
+                PROMPT_ERRCOL="%F{red}"
+                PROMPT_ERRSTAT=""
                 ;;
             *)
-                PROMPT_ZOBEAN_ERRCOL="%F{red}"
-                PROMPT_ZOBEAN_ERRSTAT="%Fexit:(${PROMPT_ZOBEAN_EXITCODE})%f"
+                PROMPT_ERRCOL="%F{red}"
+                PROMPT_ERRSTAT="%Fexit:(${PROMPT_EXITCODE})%f"
                 ;;
         esac    
     else
-        PROMPT_ZOBEAN_ERRCOL="%B%F"
+        PROMPT_ERRCOL="%B%F"
     fi
     # Keep up to the last directory in path
-    PROMPT_ZOBEAN_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
+    PROMPT_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
     # Keep only the last directory in path
-    PROMPT_ZOBEAN_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
+    PROMPT_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
     if (( $+functions[git-info] )); then
         # Get git info before each command
         git-info
     fi
     #git rev-parse --is-inside-work-tree > /dev/null 2>&1
-    #PROMPT_ZOBEAN_IS_GIT=$?
-    PROMPT_ZOBEAN_TIMESTAMP="${(%%):-"${PROMPT_ZOBEAN_TIME_FORMAT}"}" # expand it early, so it doesn't update
+    #PROMPT_IS_GIT=$?
+    PROMPT_TIMESTAMP="${(%%):-"${PROMPT_TIME_FORMAT}"}" # expand it early, so it doesn't update
 }
 
-function prompt_zobean_help
+function prompt_help
 {
   cat <<EOT
 This prompt's title and time format are customizable:
@@ -85,7 +85,7 @@ If each of these options are not provided, or are empty,
 the title defaults to $USER and the time defaults to 24hr.
 EOT
 }
-function prompt_zobean_preview
+function prompt_preview
 {
   if (( $# > 0 )); then
     prompt_preview_theme 'zobean' "$@"
@@ -97,7 +97,7 @@ function prompt_zobean_preview
     prompt_preview_theme 'zobean' 'princess' 12
   fi
 }
-function prompt_zobean_setup
+function prompt_setup
 {
     # set the following prompt_* options
     prompt_opts=(cr percent subst)
@@ -105,7 +105,7 @@ function prompt_zobean_setup
     autoload -Uz add-zsh-hook
 
     # Add hook for settung up environment variables before each command.
-    add-zsh-hook precmd prompt_zobean_precmd
+    add-zsh-hook precmd prompt_precmd
     # Update the prompt per-second
     #TRAPALRM() {
         #zle reset-prompt
@@ -115,31 +115,31 @@ function prompt_zobean_setup
     [[ $# -ge 2 ]] && local hours=$2
     case "$hours" in
         12)
-            PROMPT_ZOBEAN_TIME_FORMAT='%D{%I:%M:%S %p}'
+            PROMPT_TIME_FORMAT='%D{%I:%M:%S %p}'
             ;;
         24)
-            PROMPT_ZOBEAN_TIME_FORMAT='%D{%H:%M:%S}'
+            PROMPT_TIME_FORMAT='%D{%H:%M:%S}'
             ;;
         *)
-            PROMPT_ZOBEAN_TIME_FORMAT='%D{%H:%M:%S}'
+            PROMPT_TIME_FORMAT='%D{%H:%M:%S}'
             ;;
     esac
     case "$title" in
         "")
-            PROMPT_ZOBEAN_TITLE="%n" # same as $USER
+            PROMPT_TITLE="%n" # same as $USER
             ;;
         *)
-            PROMPT_ZOBEAN_TITLE="$title"
+            PROMPT_TITLE="$title"
             ;;
     esac
 
-    prompt_zobean_setup_git
+    prompt_setup_git
 
-    PROMPT="%{%f%b%k%}$(prompt_zobean_build)"
+    PROMPT="%{%f%b%k%}$(prompt_build)"
     RPROMPT=''
 }
 
-function prompt_zobean_setup_git
+function prompt_setup_git
 {
     # no initial format color, so needs to be colored at startup
     # looks like there'll be coupling here either way
@@ -188,7 +188,7 @@ function prompt_zobean_setup_git
         'prompt' "${prompt}"
 }
 
-function prompt_zobean_build
+function prompt_build
 {
     prompt_add_timestamps
     # space provided in prior command
@@ -204,8 +204,8 @@ function prompt_zobean_build
 }
 function prompt_add_timestamps
 {
-    local PromptLast='${PROMPT_ZOBEAN_ERRCOL}[%F%B${PROMPT_ZOBEAN_TIMESTAMP}%b${PROMPT_ZOBEAN_ERRCOL}]%f ' # finish time of last command
-    local PromptNow='%F%B[${PROMPT_ZOBEAN_TIME_FORMAT}]%b%f ' # start time of this command
+    local PromptLast='${PROMPT_ERRCOL}[%F%B${PROMPT_TIMESTAMP}%b${PROMPT_ERRCOL}]%f ' # finish time of last command
+    local PromptNow='%F%B[${PROMPT_TIME_FORMAT}]%b%f ' # start time of this command
     echo -n "${PromptLast}${PromptNow}"
 }
 function prompt_add_git
@@ -217,7 +217,7 @@ function prompt_add_git
 }
 function prompt_add_error
 {
-    echo -n '${PROMPT_ZOBEAN_ERRSTAT}'
+    echo -n '${PROMPT_ERRSTAT}'
 }
 function prompt_add_host
 {
@@ -225,11 +225,11 @@ function prompt_add_host
 }
 function prompt_add_path
 {
-    echo -n '%F{blue}${PROMPT_ZOBEAN_PATH_NECK}%B${PROMPT_ZOBEAN_PATH_HEAD}%b%f'
+    echo -n '%F{blue}${PROMPT_PATH_NECK}%B${PROMPT_PATH_HEAD}%b%f'
 }
 function prompt_add_query
 {
-    echo -n '%F{magenta}yes, %B${PROMPT_ZOBEAN_TITLE}%b%F{magenta}?%f : '
+    echo -n '%F{magenta}yes, %B${PROMPT_TITLE}%b%F{magenta}?%f : '
 }
 
-prompt_zobean_setup "$@"
+prompt_setup "$@"
