@@ -3,16 +3,15 @@
 # Last Edited:  2017-08-11
 #
 # Features:
-#   - Command timestamps
+#   - Command finish timestamp and duration
 #       - Colored to indicate exit status
-#       - Start-time timestamp can be updated with `zle reset-prompt`
 #   - Colored git status indicator (requires git prezto module)
 #       - Branch, relative position, or commit hash
 #       - Ahead and behind counts
 #       - Dirty status indicator
 #       - Stash count
 #       - Special action underway (rebase, merge, etc)
-#   - Printed exit status if not 0/1
+#   - Printed exit signal name and number
 #   - SSH/SCP path format (user@hostname:path)
 #   - Path length defined by style, with the current directory highlighted
 #   - Polite command prompt, with custom title
@@ -30,6 +29,21 @@
 # Notes:        Enjoy your stay!
 #               Let me know of any improvements!
 
+function prompt_signal
+{
+    local code="$1"
+    local sig=
+    if sig="$(kill -l "${code}" 2>/dev/null)"; then
+        if kill -l | sed 's:  *:\n:g' | grep "${sig}" &>/dev/null; then
+            echo -n "SIG${sig}"
+        else
+            echo -n "exit"
+        fi
+    else
+        echo -n "exit"
+    fi
+    echo -n "(${code})"
+}
 function prompt_print_if
 {
     # print the first argument if all the others are nonempty
@@ -38,22 +52,58 @@ function prompt_print_if
     done
     echo -n "$1"
 }
+function prompt_duration
+{
+    local totl="$1" #initially in milliseconds
+    local msec
+    local secs
+    local mins
+    local hour
+    local days
+    local year
+
+    msec="$((totl % 1000))"
+    totl="$((totl / 1000))"
+    secs="$((totl % 60))"
+    totl="$((totl / 60))"
+    mins="$((totl % 60))"
+    totl="$((totl / 60))"
+    hour="$((totl % 24))"
+    totl="$((totl / 24))"
+    days="$((totl % 365))"
+    totl="$((totl / 365))"
+    year="${totl}"
+
+    local -i resolution
+    for denomination in "${year}" "${days}" "${hour}" "${mins}" "${secs}" "${msec}" ; do
+        if [[ "${denomination}" -le 0 ]] ; then
+            resolution+=1
+        else
+            break
+        fi
+    done
+    case "${resolution}" in
+        0) printf "%dy %03dd" "${year}" "${days}" ;;
+        1) printf "%dd %02dh" "${days}" "${hour}" ;;
+        2) printf "%dh %02dm" "${hour}" "${mins}" ;;
+        3) printf "%dm %02ds" "${mins}" "${secs}" ;;
+        4) printf "%d.%03ds"  "${secs}" "${msec}" ;;
+        5) printf "%dms"      "${msec}" ;;
+        *) printf "%dms"      "${msec}" ;;
+    esac
+}
 function prompt_precmd
 {
     PROMPT_EXITCODE=$?
     if zstyle -t ':prezto:module:prompt' show-return-val; then
-        case $PROMPT_EXITCODE in
+        case ${PROMPT_EXITCODE} in
             0)
                 PROMPT_ERRCOL="%F{green}"
                 PROMPT_ERRSTAT=""
                 ;;
-            1)
-                PROMPT_ERRCOL="%F{red}"
-                PROMPT_ERRSTAT=""
-                ;;
             *)
                 PROMPT_ERRCOL="%F{red}"
-                PROMPT_ERRSTAT="%Fexit:(${PROMPT_EXITCODE})%f"
+                PROMPT_ERRSTAT="$(prompt_signal ${PROMPT_EXITCODE}) "
                 ;;
         esac    
     else
@@ -69,7 +119,25 @@ function prompt_precmd
     fi
     #git rev-parse --is-inside-work-tree > /dev/null 2>&1
     #PROMPT_IS_GIT=$?
+    if [[ -n "${PROMPT_TIMER_START}" ]]; then
+        local now="$(prompt_millis)"
+        PROMPT_TIMER="$((now - PROMPT_TIMER_START))"
+        if [[ "${PROMPT_TIMER}" -le 0 ]] ; then
+            unset PROMPT_TIMER
+        fi
+        unset PROMPT_TIMER_START
+    else
+        unset PROMPT_TIMER # reset the timer if there was no elapsed time
+    fi
     PROMPT_TIMESTAMP="${(%%):-"${PROMPT_TIME_FORMAT}"}" # expand it early, so it doesn't update
+}
+function prompt_millis
+{
+    date +"${SECONDS}%3N" | sed 's:^0*::' # milliseconds part of epoch time
+}
+function prompt_preexec
+{
+    PROMPT_TIMER_START="$(prompt_millis)"
 }
 
 function prompt_help
@@ -106,6 +174,7 @@ function prompt_setup
 
     # Add hook for settung up environment variables before each command.
     add-zsh-hook precmd prompt_precmd
+    add-zsh-hook preexec prompt_preexec
     # Update the prompt per-second
     #TRAPALRM() {
         #zle reset-prompt
@@ -113,7 +182,7 @@ function prompt_setup
     #TMOUT=1
     [[ $# -ge 1 ]] && local title=$1
     [[ $# -ge 2 ]] && local hours=$2
-    case "$hours" in
+    case "${hours}" in
         12)
             PROMPT_TIME_FORMAT='%D{%I:%M:%S %p}'
             ;;
@@ -124,7 +193,7 @@ function prompt_setup
             PROMPT_TIME_FORMAT='%D{%H:%M:%S}'
             ;;
     esac
-    case "$title" in
+    case "${title}" in
         "")
             PROMPT_TITLE="%n" # same as $USER
             ;;
@@ -132,10 +201,11 @@ function prompt_setup
             PROMPT_TITLE="$title"
             ;;
     esac
+    PROMPT_COLOR_CLEAR='%b%f'
 
     prompt_setup_git
 
-    PROMPT="%{%f%b%k%}$(prompt_build)"
+    PROMPT="%f%b%k$(prompt_build)"
     RPROMPT=''
 }
 
@@ -170,66 +240,97 @@ function prompt_setup_git
         do
             # get the git_info part specified
             # the (e) flag evaluates the embedded functions when expanding the string
-            prompt="$prompt"'${(e)git_info['"$x"']}'
+            prompt="${prompt}"'${(e)git_info['"$x"']}'
         done
     } \
-    pre error ref stream status stash action post # the order of these arguments determines the prompt component order
+    pre error action ref stream status stash post # the order of these arguments determines the prompt component order
     
     # the components are defined here
     zstyle ':prezto:module:git:info:keys' format \
-        'pre'    '%F{blue}git:(' \
-        'error'  '%E$(prompt_print_if "%F{blue}|" "%E" "%b%p%c")' \
+        'pre'    '%F{magenta}git(' \
+        'error'  '%E$(prompt_print_if "%F{magenta}|" "%E")' \
+        'action' '%s$(prompt_print_if "%F{magenta}|" "%s")' \
         'ref'    '$(coalesce "%b" "%p" "%c")' \
-        'stream' '$(prompt_print_if "%F{blue}|%B%A" "%B%A")' \
-        'status' '$(prompt_print_if "%F{blue}|%D" "%D")' \
-        'stash'  '$(prompt_print_if "%F{blue}|%S" "%S")' \
-        'action' '$(prompt_print_if "%F{blue}|%s" "%s")' \
-        'post'   '%F{blue})%f ' \
+        'stream' '$(prompt_print_if "%F{magenta}|%B%A" "%B%A")' \
+        'status' '$(prompt_print_if "%F{magenta}|%D" "%D")' \
+        'stash'  '$(prompt_print_if "%F{magenta}|%S" "%S")' \
+        'post'   '%F{magenta})%f ' \
         'prompt' "${prompt}"
 }
 
 function prompt_build
 {
-    prompt_add_timestamps
-    # space provided in prior command
-    prompt_add_git
-    # space provided in prior command
-    prompt_add_error
+    prompt_add_stopclock '%b${PROMPT_ERRCOL}' '%B%F'
+    echo -n ' '
+    prompt_add_timer '%b${PROMPT_ERRCOL}' '%B%F'
+    echo -n ' '
+    prompt_add_error '%b%F'
+    #echo -n ' ' #optional space included in previous output
+
     echo
-    prompt_add_host
+
+    prompt_add_user '%F{green}'
+    echo -n '@'
+    prompt_add_host '%F{yellow}'
     echo -n ':'
-    prompt_add_path
+    prompt_add_path '%b%F{blue}' '%B'
+    echo -n ' '
+    prompt_add_git
+
     echo
-    prompt_add_query
+
+    prompt_add_query '%b%F{magenta}' '%B'
 }
-function prompt_add_timestamps
+function prompt_add_stopclock # finish time of last command
 {
-    local PromptLast='${PROMPT_ERRCOL}[%F%B${PROMPT_TIMESTAMP}%b${PROMPT_ERRCOL}]%f ' # finish time of last command
-    local PromptNow='%F%B[${PROMPT_TIME_FORMAT}]%b%f ' # start time of this command
-    echo -n "${PromptLast}${PromptNow}"
+    local color="$1"
+    local color_inner="$2"
+    echo -n "${color}[${color_inner}\${PROMPT_TIMESTAMP}${color}]${PROMPT_COLOR_CLEAR}"
+}
+function prompt_add_clock # start time of this command
+{
+    local color="$1"
+    echo -n "${color}[\${PROMPT_TIME_FORMAT}]${PROMPT_COLOR_CLEAR}"
+}
+function prompt_add_timer
+{
+    local color="$1"
+    local color_inner="$2"
+    echo -n "${color}[${color_inner}\$(prompt_duration \${PROMPT_TIMER})${color}]${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_git
 {
     # the (e) flag evaluates the embedded functions when expanding the string
     local prompt='${(e)git_info[prompt]}'
     
-    echo -n "%B${prompt}%f%b"
+    echo -n "%B${prompt}${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_error
 {
-    echo -n '${PROMPT_ERRSTAT}'
+    local color="$1"
+    echo -n "${color}\${PROMPT_ERRSTAT}${PROMPT_COLOR_CLEAR}"
+}
+function prompt_add_user
+{
+    local color="$1"
+    echo -n "${color}%n${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_host
 {
-    echo -n '%F{green}%n%f@%F{yellow}%M%f'
+    local color="$1"
+    echo -n "${color}%M${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_path
 {
-    echo -n '%F{blue}${PROMPT_PATH_NECK}%B${PROMPT_PATH_HEAD}%b%f'
+    local color="$1"
+    local color_inner="$2"
+    echo -n "${color}\${PROMPT_PATH_NECK}${color_inner}\${PROMPT_PATH_HEAD}${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_query
 {
-    echo -n '%F{magenta}yes, %B${PROMPT_TITLE}%b%F{magenta}?%f : '
+    local color="$1"
+    local color_name="$2"
+    echo -n "${color}yes, ${color_name}\${PROMPT_TITLE}${color}?${PROMPT_COLOR_CLEAR} : "
 }
 
 prompt_setup "$@"
