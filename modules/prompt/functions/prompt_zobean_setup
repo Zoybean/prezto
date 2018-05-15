@@ -1,3 +1,4 @@
+#!/usr/bin/zsh
 # Title:        Zobean's prezto zsh theme!
 # Author:       Zoey Llewellyn "Zobean" Hewll
 # Last Edited:  2017-08-11
@@ -29,30 +30,77 @@
 # Notes:        Enjoy your stay!
 #               Let me know of any improvements!
 
-function prompt_signal
+function prompt_print_if # print the first argument if all the others are nonempty
 {
-    local code="$1"
-    local sig=
-    if sig="$(kill -l "${code}" 2>/dev/null)"; then
-        if kill -l | sed 's:  *:\n:g' | grep "${sig}" &>/dev/null; then
-            echo -n "SIG${sig}"
-        else
-            echo -n "exit"
+    local yes="$1"
+    shift
+    prompt_print_case "${yes}" "" "$@"
+}
+function prompt_print_else # print the first argument if any the others are empty
+{
+    local no="$1"
+    shift
+    prompt_print_case "" "${no}" "$@"
+}
+function prompt_print_case # print the first argument if all the others are nonempty, else print the second
+{
+    local yes="$1"
+    shift
+    local no="$1"
+    shift
+    for parameter do
+        if [[ -z "${parameter}" ]]; then
+            echo -n "$no"
+            return
         fi
-    else
-        echo -n "exit"
-    fi
-    echo -n "(${code})"
-}
-function prompt_print_if
-{
-    # print the first argument if all the others are nonempty
-    for par do
-        [[ -z "${par}" ]] && return
     done
-    echo -n "$1"
+    echo -n "$yes"
 }
-function prompt_duration
+function prompt_hook_precmd
+{
+    PROMPT_EXITCODE=$?
+    if zstyle -t ':prezto:module:prompt' show-return-val; then
+        case ${PROMPT_EXITCODE} in
+            0)
+                PROMPT_ERRCOL="%F{green}"
+                PROMPT_ERRSTAT=""
+                ;;
+            *)
+                PROMPT_ERRCOL="%F{red}"
+                PROMPT_ERRSTAT="$(prompt_format_signal ${PROMPT_EXITCODE}) "
+                ;;
+        esac    
+    else
+        PROMPT_ERRCOL="%B%F"
+    fi
+    # Keep up to the last directory in path
+    PROMPT_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
+    # Keep only the last directory in path
+    PROMPT_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
+    if (( $+functions[git-info] )); then
+        # Get git info before each command
+        git-info
+    fi
+    #git rev-parse --is-inside-work-tree > /dev/null 2>&1
+    #PROMPT_IS_GIT=$?
+    if [[ -n "${PROMPT_TIMER_START}" ]]; then
+        local now="$(prompt_get_time_millis)"
+        PROMPT_TIMER="$((now - PROMPT_TIMER_START))"
+        if [[ "${PROMPT_TIMER}" -le 0 ]] ; then
+            unset PROMPT_TIMER
+        fi
+        unset PROMPT_TIMER_START
+    else
+        unset PROMPT_TIMER # reset the timer if there was no elapsed time
+    fi
+    PROMPT_TIMESTAMP="${(%%):-"${PROMPT_TIME_FORMAT}"}" # expand it early, so it doesn't update
+}
+function prompt_hook_preexec
+{
+    PROMPT_TIMER_START="$(prompt_get_time_millis)"
+}
+
+function prompt_format_duration
 {
     local totl="$1" #initially in milliseconds
     local msec
@@ -92,57 +140,28 @@ function prompt_duration
         *) printf "%dms"      "${msec}" ;;
     esac
 }
-function prompt_precmd
+function prompt_format_signal
 {
-    PROMPT_EXITCODE=$?
-    if zstyle -t ':prezto:module:prompt' show-return-val; then
-        case ${PROMPT_EXITCODE} in
-            0)
-                PROMPT_ERRCOL="%F{green}"
-                PROMPT_ERRSTAT=""
-                ;;
-            *)
-                PROMPT_ERRCOL="%F{red}"
-                PROMPT_ERRSTAT="$(prompt_signal ${PROMPT_EXITCODE}) "
-                ;;
-        esac    
-    else
-        PROMPT_ERRCOL="%B%F"
-    fi
-    # Keep up to the last directory in path
-    PROMPT_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
-    # Keep only the last directory in path
-    PROMPT_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
-    if (( $+functions[git-info] )); then
-        # Get git info before each command
-        git-info
-    fi
-    #git rev-parse --is-inside-work-tree > /dev/null 2>&1
-    #PROMPT_IS_GIT=$?
-    if [[ -n "${PROMPT_TIMER_START}" ]]; then
-        local now="$(prompt_millis)"
-        PROMPT_TIMER="$((now - PROMPT_TIMER_START))"
-        if [[ "${PROMPT_TIMER}" -le 0 ]] ; then
-            unset PROMPT_TIMER
+    local code="$1"
+    local sig=
+    if sig="$(kill -l "${code}" 2>/dev/null)"; then
+        if kill -l | sed 's:  *:\n:g' | grep "${sig}" &>/dev/null; then
+            echo -n "SIG${sig}"
+        else
+            echo -n "exit"
         fi
-        unset PROMPT_TIMER_START
     else
-        unset PROMPT_TIMER # reset the timer if there was no elapsed time
+        echo -n "exit"
     fi
-    PROMPT_TIMESTAMP="${(%%):-"${PROMPT_TIME_FORMAT}"}" # expand it early, so it doesn't update
+    echo -n "(${code})"
 }
-function prompt_millis
+function prompt_get_time_millis
 {
-    date +"${SECONDS}%3N" | sed 's:^0*::' # milliseconds part of epoch time
+    date +"${SECONDS}%3N" | sed 's:^0*::' # trim leading 0s
 }
-function prompt_preexec
-{
-    PROMPT_TIMER_START="$(prompt_millis)"
-}
-
 function prompt_help
 {
-  cat <<EOT
+cat <<EOT
 This prompt's title and time format are customizable:
   prompt zobean [<title> [(12/24)]]
 
@@ -153,33 +172,27 @@ If each of these options are not provided, or are empty,
 the title defaults to $USER and the time defaults to 24hr.
 EOT
 }
-function prompt_preview
+function prompt_zobean_preview
 {
-  if (( $# > 0 )); then
-    prompt_preview_theme 'zobean' "$@"
-  else
-    prompt_preview_theme 'zobean'
-    print
-    prompt_preview_theme 'zobean' 'my prince'
-    print
-    prompt_preview_theme 'zobean' 'princess' 12
-  fi
+    if (( $# > 0 )); then
+        prompt_preview_theme 'zobean' "$@"
+    else
+        prompt_preview_theme 'zobean'
+        print
+        prompt_preview_theme 'zobean' 'my prince'
+        print
+        prompt_preview_theme 'zobean' 'princess' 12
+    fi
 }
-function prompt_setup
+function prompt_zobean_setup
 {
-    # set the following prompt_* options
-    prompt_opts=(cr percent subst)
-    # Load required functions.
-    autoload -Uz add-zsh-hook
+    prompt_opts=(cr percent subst) # set the following prompt_* options
+    autoload -Uz add-zsh-hook # Load required functions.
 
-    # Add hook for settung up environment variables before each command.
-    add-zsh-hook precmd prompt_precmd
-    add-zsh-hook preexec prompt_preexec
-    # Update the prompt per-second
-    #TRAPALRM() {
-        #zle reset-prompt
-    #}
-    #TMOUT=1
+    # Add hooks for before and after each command line
+    add-zsh-hook precmd prompt_hook_precmd
+    add-zsh-hook preexec prompt_hook_preexec
+
     [[ $# -ge 1 ]] && local title=$1
     [[ $# -ge 2 ]] && local hours=$2
     case "${hours}" in
@@ -204,11 +217,18 @@ function prompt_setup
     PROMPT_COLOR_CLEAR='%b%f'
 
     prompt_setup_git
+    prompt_setup_editor
 
-    PROMPT="%f%b%k$(prompt_build)"
+    PROMPT="%f%b%k$(prompt_zobean_build)"
     RPROMPT=''
 }
-
+function prompt_setup_editor
+{
+    #zstyle ':prezto:module:editor:info:keymap:primary'           format '> ' # Primary keymap (emacs or viins)
+    zstyle ':prezto:module:editor:info:keymap:primary:insert'    format '> ' # Primary keymap (emacs or viins) insert mode
+    zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format '>_' # Primary keymap (emacs or viins) overwrite mode
+    zstyle ':prezto:module:editor:info:keymap:alternate'         format '< ' # Alternate keymap (vicmd)
+}
 function prompt_setup_git
 {
     # no initial format color, so needs to be colored at startup
@@ -258,7 +278,7 @@ function prompt_setup_git
         'prompt' "${prompt}"
 }
 
-function prompt_build
+function prompt_zobean_build
 {
     prompt_add_stopclock '%b${PROMPT_ERRCOL}' '%B%F'
     echo -n ' '
@@ -280,6 +300,9 @@ function prompt_build
     echo
 
     prompt_add_query '%b%F{magenta}' '%B'
+    echo -n ' '
+    prompt_add_mode
+    #echo -n ' '
 }
 function prompt_add_stopclock # finish time of last command
 {
@@ -296,7 +319,7 @@ function prompt_add_timer
 {
     local color="$1"
     local color_inner="$2"
-    echo -n "${color}[${color_inner}\$(prompt_duration \${PROMPT_TIMER})${color}]${PROMPT_COLOR_CLEAR}"
+    echo -n "${color}[${color_inner}\$(prompt_format_duration \${PROMPT_TIMER})${color}]${PROMPT_COLOR_CLEAR}"
 }
 function prompt_add_git
 {
@@ -330,7 +353,18 @@ function prompt_add_query
 {
     local color="$1"
     local color_name="$2"
-    echo -n "${color}yes, ${color_name}\${PROMPT_TITLE}${color}?${PROMPT_COLOR_CLEAR} : "
+    echo -n "${color}yes, ${color_name}\${PROMPT_TITLE}${color}?${PROMPT_COLOR_CLEAR}"
+}
+function prompt_add_mode
+{
+    local keymap='${(e)editor_info[keymap]}'
+    local primary='${(e)editor_info[primary]}'
+    local overwrite='${(e)editor_info[overwrite]}'
+    local insert='${(e)editor_info[insert]}'
+    echo -n "\$(coalesce ${overwrite} ${insert} ${keymap})"
 }
 
-prompt_setup "$@"
+
+prompt_zobean_setup "$@"
+
+
