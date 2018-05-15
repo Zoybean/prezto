@@ -54,6 +54,11 @@ zstyle ':prezto:load' pmodule \
 #   '0.0.0.0' '127.0.0.1'
 
 # }}}
+# Directory {{{
+#
+# This sets the `cdablevars` option, which i dislike, and have unset in my .zshrc
+#
+# }}}
 # Editor {{{
 
 # Set the key mapping style to 'emacs' or 'vi'.
