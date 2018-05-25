@@ -62,36 +62,15 @@ tabs 4
 # }}}
 # Alias Settings {{{
 # Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-    export EDITOR='vim'
-    alias nemo='nemo --no-desktop'
-else
-    export EDITOR='vim'
-    alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-    alias define='dict'
-    alias del='gvfs-trash'
-    alias monitor='gnome-system-monitor'
-    alias pip='pip3'
-    alias python='python3'
-    #alias utserver='utserver -settingspath ~/.utserver/ -configfile ~/.utserver/utserver.conf -logfile ~/.utserver/utserver.log -pidfile ~/.utserver/utserver.pid -daemon'
-    alias transmission='sudo service transmission-daemon' # must be followed by start, stop, or reload
+if [[ -f ~/.aliases ]]; then
+    . ~/.aliases
 fi
-alias edit='$EDITOR'
-alias ls='ls --color=tty --group-directories-first'
-alias reset='exec $SHELL'
-alias rsync='rsync --progress'
-alias shred='\shred --iterations=10 --exact --zero --remove'
-alias take=mkcd
-alias vi="vim"
-alias vim='vim -o'
-function mkcd
-{
-    mkdir "$@"
-    cd "$1"
-}
+if [[ -f ~/.zsh_aliases ]]; then
+    . ~/.zsh_aliases
+fi
 # }}}
 # Environment (may belong in zprofile) {{{
-export PYTHONPATH="$PYTHONPATH:$HOME/Dropbox/Programming/python"
+export PYTHONPATH="$PYTHONPATH:$HOME/Documents/Programming/python"
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
