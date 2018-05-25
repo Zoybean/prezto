@@ -216,6 +216,12 @@ function prompt_zobean_setup
     esac
     PROMPT_COLOR_CLEAR='%b%f'
 
+    if hash whoami 2> /dev/null && [[ "$(whoami)" == 'root' ]] ; then
+        PROMPT_COLOR_USER='%b%F{red}'
+    else
+        PROMPT_COLOR_USER='%b%F{green}'
+    fi
+
     prompt_setup_git
     prompt_setup_editor
 
@@ -289,7 +295,7 @@ function prompt_zobean_build
 
     echo
 
-    prompt_add_user '%F{green}'
+    prompt_add_user "$PROMPT_COLOR_USER"
     echo -n '@'
     prompt_add_host '%F{yellow}'
     echo -n ':'
