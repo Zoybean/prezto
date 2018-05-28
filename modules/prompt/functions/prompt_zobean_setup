@@ -73,10 +73,15 @@ function prompt_hook_precmd
     else
         PROMPT_ERRCOL="%B%F"
     fi
-    # Keep up to the last directory in path
-    PROMPT_PATH_NECK="$(prompt-pwd | sed -E 's:[^/]*/?$::')"
+    PROMPT_PATH="$(pwd)"
     # Keep only the last directory in path
-    PROMPT_PATH_HEAD="$(prompt-pwd | grep --color=never -Eo '[^/]*/?$')"
+    PROMPT_PATH_HEAD="$(basename "$PROMPT_PATH")"
+    # Keep up to the last directory in path
+    if [[ "$PROMPT_PATH" == '/' ]] ; then
+        PROMPT_PATH_NECK=""
+    else
+        PROMPT_PATH_NECK="$(dirname "$PROMPT_PATH" | sed 's:/*$:/:')"
+    fi
     if (( $+functions[git-info] )); then
         # Get git info before each command
         git-info
