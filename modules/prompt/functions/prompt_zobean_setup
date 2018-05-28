@@ -249,20 +249,20 @@ function prompt_setup_git
     zstyle ':prezto:module:git:info:commit' format '%F{red}%c'
     zstyle ':prezto:module:git:info:error' format '%F{red}::error::'
 
-    zstyle ':prezto:module:git:info:ahead' format '%F{yellow}↑%A'
-    zstyle ':prezto:module:git:info:behind' format '%F{green}↓%B'
+    zstyle ':prezto:module:git:info:ahead' format '%F{yellow}^%A'
+    zstyle ':prezto:module:git:info:behind' format '%F{green}v%B'
 
-    #zstyle ':prezto:module:git:info:clean' format '%F{green}✔'
-    zstyle ':prezto:module:git:info:dirty' format '%F{yellow}✖'
+    #zstyle ':prezto:module:git:info:clean' format '%F{green}/'
+    zstyle ':prezto:module:git:info:dirty' format '%F{yellow}*'
     zstyle ':prezto:module:git:info:stashed' format '%F{green}[%S]'
 
     zstyle ':prezto:module:git:info:action' format '%F{yellow}:%F{red}%s%F{yellow}:' # current special action occuring, eg merge,rebase
 
     zstyle ':prezto:module:git:info' verbose 'yes'
-    #zstyle ':prezto:module:git:info:added' format '%F{green}✚%F{blue}'
-    #zstyle ':prezto:module:git:info:deleted' format '%F{red}✖%F{blue}'
-    #zstyle ':prezto:module:git:info:modified' format '%F{yellow}●%F{blue}'
-    #zstyle ':prezto:module:git:info:renamed' format '%F{yellow}*%F{blue}'
+    #zstyle ':prezto:module:git:info:added' format '%F{green}+%F{blue}'
+    #zstyle ':prezto:module:git:info:deleted' format '%F{red}-%F{blue}'
+    #zstyle ':prezto:module:git:info:modified' format '%F{yellow}*%F{blue}'
+    #zstyle ':prezto:module:git:info:renamed' format '%F{yellow}~%F{blue}'
 
     local prompt=""
     function # setup the prompt component order
