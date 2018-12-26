@@ -242,6 +242,8 @@ function prompt_setup_editor
 }
 function prompt_setup_git
 {
+    # go to https://github.com/sorin-ionescu/prezto/tree/master/modules/git#theming for info on this section
+
     # no initial format color, so needs to be colored at startup
     # looks like there'll be coupling here either way
     zstyle ':prezto:module:git:info:branch' format '%F{blue}%b'
@@ -252,17 +254,19 @@ function prompt_setup_git
     zstyle ':prezto:module:git:info:ahead' format '%F{yellow}^%A'
     zstyle ':prezto:module:git:info:behind' format '%F{green}v%B'
 
-    #zstyle ':prezto:module:git:info:clean' format '%F{green}/'
+    zstyle ':prezto:module:git:info:clean' format '%F{green}*'
+    zstyle ':prezto:module:git:info:untracked' format '%F{yellow}+'
     zstyle ':prezto:module:git:info:dirty' format '%F{yellow}*'
+    zstyle ':prezto:module:git:info:tracked' format '%F{red}*'
     zstyle ':prezto:module:git:info:stashed' format '%F{green}[%S]'
 
     zstyle ':prezto:module:git:info:action' format '%F{yellow}:%F{red}%s%F{yellow}:' # current special action occuring, eg merge,rebase
 
     zstyle ':prezto:module:git:info' verbose 'yes'
-    #zstyle ':prezto:module:git:info:added' format '%F{green}+%F{blue}'
-    #zstyle ':prezto:module:git:info:deleted' format '%F{red}-%F{blue}'
-    #zstyle ':prezto:module:git:info:modified' format '%F{yellow}*%F{blue}'
-    #zstyle ':prezto:module:git:info:renamed' format '%F{yellow}~%F{blue}'
+    #zstyle ':prezto:module:git:info:added' format '%F{green}+'
+    #zstyle ':prezto:module:git:info:deleted' format '%F{red}-'
+    #zstyle ':prezto:module:git:info:modified' format '%F{yellow}*'
+    #zstyle ':prezto:module:git:info:renamed' format '%F{yellow}~'
 
     local prompt=""
     function # setup the prompt component order
@@ -274,18 +278,18 @@ function prompt_setup_git
             prompt="${prompt}"'${(e)git_info['"$x"']}'
         done
     } \
-    pre error action ref stream status stash post # the order of these arguments determines the prompt component order
+    pre error action ref upstream status stash post # the order of these arguments determines the prompt component order
     
     # the components are defined here
     zstyle ':prezto:module:git:info:keys' format \
-        'pre'    '%F{magenta}git(' \
-        'error'  '%E$(prompt_print_if "%F{magenta}|" "%E")' \
-        'action' '%s$(prompt_print_if "%F{magenta}|" "%s")' \
-        'ref'    '$(coalesce "%b" "%p" "%c")' \
-        'stream' '$(prompt_print_if "%F{magenta}|%B%A" "%B%A")' \
-        'status' '$(prompt_print_if "%F{magenta}|%D" "%D")' \
-        'stash'  '$(prompt_print_if "%F{magenta}|%S" "%S")' \
-        'post'   '%F{magenta})%f ' \
+        'pre'      '%F{magenta}git(' \
+        'error'    '$(prompt_print_if "%E%F{magenta}|" "%E")' \
+        'action'   '$(prompt_print_if "%s%F{magenta}|" "%s")' \
+        'ref'      '$(coalesce "%b" "%p" "%c")' \
+        'upstream' '$(prompt_print_if "%F{magenta}|%B%A" "%B%A")' \
+        'status'   '$(prompt_print_else "%F{magenta}|$(coalesce "$(prompt_print_if "%F{red}+" "%t" "%u")" "%t" "%u")" "%C")' \
+        'stash'    '$(prompt_print_if "%F{magenta}|%S" "%S")' \
+        'post'     '%F{magenta})%f ' \
         'prompt' "${prompt}"
 }
 
