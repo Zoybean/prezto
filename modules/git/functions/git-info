@@ -295,7 +295,6 @@ function git-info {
   # Get status type.
   if ! zstyle -t ':prezto:module:git:info' verbose; then
     # Format indexed.
-    zstyle -s ':prezto:module:git:info:indexed' format 'indexed_format'
     if [[ -n "$indexed_format" ]]; then
       ((
         indexed+=$(
@@ -310,12 +309,12 @@ function git-info {
         )
       ))
       if (( indexed > 0 )); then
+        zstyle -s ':prezto:module:git:info:indexed' format 'indexed_format'
         zformat -f indexed_formatted "$indexed_format" "i:$indexed"
       fi
     fi
 
     # Format unindexed.
-    zstyle -s ':prezto:module:git:info:unindexed' format 'unindexed_format'
     if [[ -n "$unindexed_format" ]]; then
       ((
         unindexed+=$(
@@ -328,12 +327,12 @@ function git-info {
         )
       ))
       if (( unindexed > 0 )); then
+        zstyle -s ':prezto:module:git:info:unindexed' format 'unindexed_format'
         zformat -f unindexed_formatted "$unindexed_format" "I:$unindexed"
       fi
     fi
 
     # Format untracked.
-    zstyle -s ':prezto:module:git:info:untracked' format 'untracked_format'
     if [[ -n "$untracked_format" ]]; then
       ((
         untracked+=$(
@@ -344,9 +343,6 @@ function git-info {
           | wc -l
         )
       ))
-      if (( untracked > 0 )); then
-        zformat -f untracked_formatted "$untracked_format" "u:$untracked"
-      fi
     fi
 
     (( dirty = indexed + unindexed + untracked ))
@@ -398,12 +394,14 @@ function git-info {
       zstyle -s ':prezto:module:git:info:unmerged' format 'unmerged_format'
       zformat -f unmerged_formatted "$unmerged_format" "U:$unmerged"
     fi
+  fi
 
-    # Format untracked.
-    if (( untracked > 0 )); then
-      zstyle -s ':prezto:module:git:info:untracked' format 'untracked_format'
-      zformat -f untracked_formatted "$untracked_format" "u:$untracked"
-    fi
+  # Format untracked.
+  if (( untracked > 0 )); then
+    zstyle -s ':prezto:module:git:info:untracked' format 'untracked_format'
+    zformat -f untracked_formatted "$untracked_format" "u:$untracked"
+  fi
+
   fi
 
   # Format dirty and clean.
