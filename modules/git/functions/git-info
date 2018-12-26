@@ -138,6 +138,9 @@ function git-info {
   local dirty=0
   local dirty_format
   local dirty_formatted
+  local tracked=0
+  local tracked_format
+  local tracked_formatted
   local error=0
   local error_format
   local error_formatted
@@ -402,6 +405,11 @@ function git-info {
     zformat -f untracked_formatted "$untracked_format" "u:$untracked"
   fi
 
+  # Format tracked.
+  (( tracked = dirty - untracked ))
+  if (( tracked > 0 )); then
+    zstyle -s ':prezto:module:git:info:tracked' format 'tracked_format'
+    zformat -f tracked_formatted "$tracked_format" "t:$tracked"
   fi
 
   # Format dirty and clean.
@@ -440,6 +448,7 @@ function git-info {
       "s:$action_formatted" \
       "S:$stashed_formatted" \
       "U:$unmerged_formatted" \
+      "t:$tracked_formatted" \
       "u:$untracked_formatted"
     git_info[$info_format]="$REPLY"
   done
