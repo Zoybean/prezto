@@ -127,7 +127,7 @@ function prompt_run_clock
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
 zstyle ':prezto:module:prompt' theme 'zobean' 'princess'
-prompt_run_clock 1
+#prompt_run_clock 1
 
 # Set the working directory prompt display length.
 # By default, it is set to 'short'. Set it to 'long' (without '~' expansion)
