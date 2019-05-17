@@ -52,8 +52,8 @@ HIST_STAMPS="yyyy/mm/dd"
 HISTFILE=~/.zsh_history
 HISTSIZE=1000
 SAVEHIST=2000
-setopt appendhistory beep extendedglob nomatch autocd
-unsetopt notify nomatch
+setopt appendhistory beep extendedglob nullglob autocd
+unsetopt notify cdablevars
 #bindkey -v
 
 # }}}
