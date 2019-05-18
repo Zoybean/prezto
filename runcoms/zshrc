@@ -36,6 +36,8 @@ DISABLE_AUTO_TITLE="false"
 
 # Enable command auto-correction.
 ENABLE_CORRECTION="false"
+DISABLE_CORRECTION="true"
+unsetopt correct #TODO this doesn't seem to be disabling 'correct'
 
 # Display red dots whilst waiting for completion.
 COMPLETION_WAITING_DOTS="true"
@@ -47,14 +49,12 @@ HIST_STAMPS="yyyy/mm/dd"
 # Would you like to use another custom folder than $ZSH/custom?
 #ZSH_CUSTOM=/path/to/new-custom-folder
  
-# Lines configured by zsh-newuser-install {{{
 HISTFILE=~/.zsh_history
 HISTSIZE=1000
 SAVEHIST=2000
 setopt appendhistory beep extendedglob nomatch autocd
-unsetopt notify correct #TODO this doesn't seem to be disabling 'correct'
+unsetopt notify nomatch
 #bindkey -v
-# }}} 
 
 # }}}
 # Appearance {{{
